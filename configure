@@ -1,0 +1,235 @@
+#!/bin/sh
+
+find_libcurl(){
+	PKG=libcurl
+	echo "Looking for $PKG..."
+	VAR_PREFIX=`echo $PKG | tr [:lower:] [:upper:]`
+	TMP_FOUND=`eval echo "$"${VAR_PREFIX}_FOUND`
+	if [ "$TMP_FOUND" ]; then return; fi
+	
+	which "$CURL_CONFIG" 2>&1 > /dev/null
+	if [ "$?" -ne 0 ]; then 
+		echo "$CURL_CONFIG not found; unable to loacte $PKG" >&2
+		return; 
+	fi
+
+	LIBCURL_CFLAGS=`"$CURL_CONFIG" --cflags`"-I"`curl-config --prefix`"/include"
+	LIBCURL_LDFLAGS=`"$CURL_CONFIG" --libs`
+	LIBCURL_FOUND=1
+	echo " Found $PKG"
+}
+
+find_libxml2(){
+	PKG=libxml2
+	echo "Looking for $PKG..."
+	VAR_PREFIX=`echo $PKG | tr [:lower:] [:upper:]`
+	TMP_FOUND=`eval echo "$"${VAR_PREFIX}_FOUND`
+	if [ "$TMP_FOUND" ]; then return; fi
+	
+	which "$XML2_CONFIG" 2>&1 > /dev/null
+	if [ "$?" -ne 0 ]; then 
+		echo "$XML2_CONFIG not found; unable to loacte $PKG" >&2
+		return; 
+	fi
+
+	LIBXML2_CFLAGS=`"$XML2_CONFIG" --cflags`
+	LIBXML2_LDFLAGS=`"$XML2_CONFIG" --libs`
+	LIBXML2_FOUND=1
+	echo " Found $PKG"
+}
+
+find_cryptopp(){
+	# We have no actual way to do this. Try compiling a trivial program to see if
+	# it works. 
+	echo "Checking for cryptopp..."
+	TEST_FLAGS="$CXXFLAGS $CRYPTOPP_CFLAGS $LDFLAGS $CRYPTOPP_LDFLAGS"
+	$CXX src/cryptopp_test.cpp $TEST_FLAGS -o bin/cryptopp_test >/dev/null 2>&1
+	RESULT=$?
+	if [ "$RESULT" -ne 0 ];
+	then
+		echo "Unable to compile a basic program using the Crypto++ library" >&2
+		echo "There is either a problem with the compiler or the flags " >&2
+		echo " associated with cryptopp. Please specify --with-cryptopp=..." >&2
+		echo " as necessary. " >&2
+		return
+	fi
+	rm -f bin/cryptopp_test
+	CRYPTOPP_FOUND=1
+	echo " cryptopp available"
+}
+
+PREFIX=/usr/local
+VERSION_NUM=000100
+VERSION=`echo $VERSION_NUM | awk '{
+	major = int($1/100000);
+	minor = ($1/100)%1000;
+	patch = $1%100;
+	print major"."minor"."patch;
+}'`
+OS_NAME=`uname -s`
+
+GUESS_CXX=g++
+GUESS_AR=ar
+GUESS_LD=ld
+if [ "$OS_NAME" = Darwin ]; then
+	GUESS_CXX=clang++
+	GUESS_LD=clang++
+	DYN_SUFFIX=.dylib
+	DYN_OPT='-dynamiclib -compatibility_version $(VERSION) -current_version $(VERSION)'
+elif [ "$OS_NAME" = FreeBSD ]; then
+	DYN_SUFFIX=.so
+	DYN_OPT='-shared'
+else
+	DYN_SUFFIX=.so
+	DYN_OPT='-shared -Wl,-soname,$(shell basename $(DYN_PRODUCT))'
+fi
+
+CXX=${CXX-$GUESS_CXX}
+AR=${AR-$GUESS_AR}
+LD=${LD-$GUESS_LD}
+
+CURL_CONFIG="curl-config"
+XML2_CONFIG="xml2-config"
+CRYPTOPP_CFLAGS=${CRYPTOPP_CFLAGS-""}
+CRYPTOPP_LDFLAGS=${CRYPTOPP_LDFLAGS-"-lcryptopp"}
+
+CXXFLAGS="$CXXFLAGS -std=c++11 -O2 -Iinclude"
+
+if [ ! -d ./bin/ ]; then
+    mkdir bin;
+fi
+if [ ! -d ./lib/ ]; then
+	mkdir lib;
+fi
+
+# define help
+HELP="Usage: ./config.sh [OPTION]... 
+
+Installation directories:
+  --prefix=PREFIX         install files in PREFIX
+                          [$PREFIX]
+
+By default, \`make install' will install all the files in
+\`$PREFIX/bin', \`$PREFIX/lib' etc.  You can specify
+an installation prefix other than \`$PREFIX' using \`--prefix',
+for instance \`--prefix=\$HOME'.
+
+The following options can be used to maunally specify the 
+locations of dependencies:
+  --with-cyptopp=DIR        use the copy of Crypto++ in DIR
+                            assuming headers are in DIR/include
+                            and libraries in DIR/lib
+  --with-cyptopp-incdir=DIR use the copy of Crypto++ in DIR
+  --with-cyptopp-libdir=DIR use the copy of Crypto++ in DIR
+  --with-curl-config=PROG   use PROG as curl-config to obtain
+                            suitable libcurl flags
+  --with-xml2-config=PROG   use PROG as xml2-config to obtain
+                            suitable libxml2 flags
+
+Some influential environment variables:
+CXX         C++ compiler command
+AR          Static linker command
+LD          Dynamic linker command
+CXXFLAGS    C++ compiler flags
+LDFLAGS     Linker flags
+" #`
+
+# parse arguments
+
+for var in "$@"
+do
+	if [ "$var" = "--help" -o "$var" = "-h" ]; then
+		echo "$HELP"
+		exit 0
+	fi
+
+	TMP=`echo "$var" | sed -n 's/^--prefix=\(.*\)$/\1/p'`
+	if [ "$TMP" ]; then PREFIX="$TMP"; continue; fi
+
+	TMP=`echo "$var" | sed -n 's/^--with-cryptopp=\(.*\)$/\1/p'`
+	if [ "$TMP" ]; then
+		CRYPTOPP_INCDIR="${TMP}/include";
+		CRYPTOPP_LIBDIR="${TMP}/lib";
+	continue; fi
+
+	TMP=`echo "$var" | sed -n 's/^--with-cryptopp-incdir=\(.*\)$/\1/p'`
+	if [ "$TMP" ]; then CRYPTOPP_INCDIR="$TMP"; continue; fi
+
+	TMP=`echo "$var" | sed -n 's/^--with-cryptopp-libdir=\(.*\)$/\1/p'`
+	if [ "$TMP" ]; then CRYPTOPP_LIBDIR="$TMP"; continue; fi
+
+	TMP=`echo "$var" | sed -n 's/^--with-curl-config=\(.*\)$/\1/p'`
+	if [ "$TMP" ]; then CURL_CONFIG="${TMP}"; continue; fi
+
+	TMP=`echo "$var" | sed -n 's/^--with-xml2-config=\(.*\)$/\1/p'`
+	if [ "$TMP" ]; then XML2_CONFIG="${TMP}"; continue; fi
+
+	echo "config.sh: Unknown or malformed option '$var'" 1>&2
+	exit 1
+done
+
+find_libcurl
+find_libxml2
+
+if [ "$CRYPTOPP_INCDIR" -o "$CRYPTOPP_LIBDIR" ]; then
+	echo "Checking manually specified cryptopp..."
+	if [ -d "$CRYPTOPP_INCDIR/cryptopp" \
+         -a -e "$CRYPTOPP_INCDIR/cryptopp/sha.h" \
+         -a -d "$CRYPTOPP_LIBDIR" \
+         -a -e "$CRYPTOPP_LIBDIR/libcryptopp.a" ]; then
+		CRYPTOPP_FOUND=1
+		CRYPTOPP_CFLAGS="-I$CRYPTOPP_INCDIR"
+		CRYPTOPP_LDFLAGS="-L$CRYPTOPP_LIBDIR -lcryptopp"
+	else
+		echo "Warning: manually specifed crypto++ not found"
+	fi
+fi
+find_cryptopp
+
+if [ ! "$LIBCURL_FOUND" -o ! "$LIBXML2_FOUND" -o ! "$CRYPTOPP_FOUND" ]; then
+	echo >&2
+	if [ ! "$LIBCURL_FOUND" ]; then
+		echo "configure: Error: libcurl not found" >&2
+	fi
+	if [ ! "$LIBXML2_FOUND" ]; then
+		echo "configure: Error: libxml2 not found" >&2
+	fi
+	if [ ! "$CRYPTOPP_FOUND" ]; then
+		echo "configure: Error: cryptopp not found" >&2
+	fi
+	exit 1
+fi
+
+# git and git-like things are too dumb to know about directories, so any 
+# directories which are initially empty need to be re-created on demand.
+mkdir -p bin
+mkdir -p build
+mkdir -p lib
+
+echo "Generating settings.mk"
+echo "
+# Compiler
+CXX:=$CXX
+AR:=$AR
+LD:=$LD
+
+# Dependencies
+LIBCURL_CFLAGS=$LIBCURL_CFLAGS
+LIBCURL_LDFLAGS=$LIBCURL_LDFLAGS
+LIBXML2_CFLAGS=$LIBXML2_CFLAGS
+LIBXML2_LDFLAGS=$LIBXML2_LDFLAGS
+CRYPTOPP_CFLAGS=$CRYPTOPP_CFLAGS
+CRYPTOPP_LDFLAGS=$CRYPTOPP_LDFLAGS
+
+# Installation
+PREFIX:=$PREFIX
+
+# Other
+VERSION:=$VERSION
+CXXFLAGS:=$CXXFLAGS
+LDFLAGS:=$LDFLAGS
+
+DYN_SUFFIX:=$DYN_SUFFIX
+DYN_OPT=$DYN_OPT
+"> settings.mk
+echo "Generation done. Now ready to run 'make'."

@@ -1,0 +1,36 @@
+Support multi-object delete
+'Recursive' delete? (Using a prefix)
+In s3ls, XML parsing should populate a data structure to be printed, rather than printing directly
+	this would allow more formatting and sorting options
+	output would not begin to appear until all results collected, however
+		sometimes undesirable when listing large 'directories'
+		might include a flag to return to an 'online' output system
+Allow regions besides "us-east-1"
+Figure out whether anything should be done to support 'virtual host style'
+Support setting bucket permissions?
+Support range GET requests
+
+If an S3 feature is supported by neither Ceph nor Minio, implementing it in this code is not very interesting. 
+Ceph features: http://docs.ceph.com/docs/hammer/radosgw/s3/#features-support
+Minio features: https://github.com/minio/minio/blob/135a6a7bb4d80fb7eb2f23df331f652f1b1d8a33/docs/minio-limitations.md
+
+Feature				Ceph		Minio		This Code
+List Buckets			Supported	Supported	Supported
+Delete Bucket			Supported	Supported	Supported
+Create Bucket			Supported	Supported	Supported
+Bucket Lifecycle		Not Supported	Not Supported	Not Supported
+Policy (Buckets, Objects)	Not Supported	Supported?	Not Supported
+Bucket Website			Not Supported	Not Supported	Not Supported
+Bucket ACLs (Get, Put)		Supported	Not Supported	Not Supported
+Bucket Location			Supported	Supported	Supported
+Bucket Notification		Not Supported	?		Not Supported
+Bucket Object Versions		Supported	Not Supported	Not Supported
+Get Bucket Info (HEAD)		Supported	Not Supported?	Not Supported
+Put Object			Supported	Supported	Supported
+Delete Object			Supported	Supported	Supported
+Get Object			Supported	Supported	Supported
+Object ACLs (Get, Put)		Supported	Not Supported	Not Supported
+Get Object Info (HEAD)		Supported	?		Not Supported
+POST Object			Supported	?		Not Supported
+Copy Object			Supported	Supported	Supported
+Multipart Uploads		~Supported	?		Not Supported
