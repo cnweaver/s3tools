@@ -65,7 +65,7 @@ Once credentials are stored, it is possible to interact with a server. The most 
 
 `s3rm` can be used to delete objects. While it can accept multiple arguments to be deleted, it is currently limited to sending a separate request per deletion, and does not support any form of 'wildcard' or 'recursive' (by prefix) deletion. 
 
-`s3cp` can be used to upload and download objects, as well as copying them o the server. Usage is hopefully suitable analogous to `cp` or `scp`, with remove sources or destinations specified as URLs:
+`s3cp` can be used to upload and download objects, as well as copying them o the server. Usage is hopefully suitable analogous to `cp` or `scp`, with remote sources or destinations specified as URLs:
 
 	$ echo "ABCdef" > fileC
 	$ s3cp fileC https://example.com/bucket1/fileC
