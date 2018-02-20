@@ -82,7 +82,7 @@ Once credentials are stored, it is possible to interact with a server. The most 
 Finally, somewhat distinct from the rest of the command line tools, `s3sign` provides direct access to producing presigned URLs for S3 objects. This is useful for providing upload or download URLs to other users, or to cluster jobs which can then read or write data without needing certificates or credentials. The resulting URLs should be usable by any program which can perform HTTP requests. Usage is simple:
 
 	$ s3sign https://example.com/bucket1/fileC GET
-https://example.com/bucket1/fileC?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=user%2F20180219%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20180219T233030Z&X-Amz-Expires=86400&X-Amz-Signature=fb28f369b3233bcce2588158ffdb982f916d0857d170f6c341b1475c883de57b&X-Amz-SignedHeaders=host
+	https://example.com/bucket1/fileC?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=user%2F20180219%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20180219T233030Z&X-Amz-Expires=86400&X-Amz-Signature=fb28f369b3233bcce2588158ffdb982f916d0857d170f6c341b1475c883de57b&X-Amz-SignedHeaders=host
 	$ 
 
 This URL would allow anyone who has it to read https://example.com/bucket1/fileC via an HTTP `GET` request for 24 hours after the URL was generated. The validity duration of URLs can be controlled by passing a duration in seconds as the optional third argument to `s3sign`. Any HTTP verb is allowed, although `GET` and `PUT` are likely to be the most useful. `DELETE` can also be used, for example, to accomplish the same task as `s3rm`. 
