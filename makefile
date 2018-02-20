@@ -5,7 +5,11 @@ LIBOBJECTS=build/url.o build/signing.o build/cred_manage.o
 PROGRAMS=bin/s3bucket bin/s3cred bin/s3cp bin/s3ls bin/s3rm bin/s3sign
 TESTS=tests/url_tests
 
-all : $(STATLIB) $(PROGRAMS)
+all : $(STATLIB) $(PROGRAMS) settings.mk
+
+settings.mk : 
+	@echo "  You need to run ./configure before make  "
+	@sh -c 'exit 1'
 
 $(STATLIB) : $(LIBOBJECTS)
 	ar -rcs $(STATLIB) $(LIBOBJECTS)
