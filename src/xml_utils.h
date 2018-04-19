@@ -1,6 +1,7 @@
 #ifndef S3TOOLS_XML_UTILS_H
 #define S3TOOLS_XML_UTILS_H
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
