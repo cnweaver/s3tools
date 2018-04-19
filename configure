@@ -13,7 +13,7 @@ find_libcurl(){
 		return; 
 	fi
 
-	LIBCURL_CFLAGS=`"$CURL_CONFIG" --cflags`"-I"`curl-config --prefix`"/include"
+	LIBCURL_CFLAGS=`"$CURL_CONFIG" --cflags`" -I"`curl-config --prefix`"/include"
 	LIBCURL_LDFLAGS=`"$CURL_CONFIG" --libs`
 	LIBCURL_FOUND=1
 	echo " Found $PKG"
