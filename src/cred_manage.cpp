@@ -12,15 +12,31 @@ namespace s3tools{
 
 ///Get the path to the user's credential file
 std::string getCredFilePath(){
-	char* envResult=getenv("HOME");
+	char* envResult;
+	envResult=getenv("S3_CRED_PATH");
+	if(envResult)
+		return(envResult);
+	
+	envResult=getenv("XDG_CONFIG_HOME");
+	if(envResult){
+		std::string path=envResult;
+		if(!path.empty()){
+			if(path.back()!='/')
+				path+='/';
+			path+="s3tools/credentials";
+			return(path);
+		}
+	}
+	
+	envResult=getenv("HOME");
 	if(!envResult)
-		throw std::runtime_error("Unable to loacte home directory");
+		throw std::runtime_error("Unable to locate home directory");
 	std::string path=envResult;
 	if(path.empty())
 		throw std::runtime_error("Got an empty home directory path");
 	if(path.back()!='/')
 		path+='/';
-	path+=".s3_credentials";
+	path+=".config/s3tools/credentials";
 	return(path);
 }
 
@@ -115,6 +131,49 @@ void writeCredentials(const CredentialCollection& credentials){
 			throw std::runtime_error("Failed to write to "+path);
 	}
 }
+
+void mkdir_p(const std::string& path, uint16_t mode){
+	auto makeIfNonexistent=[=](const std::string& path){
+		bool make=false;
+		struct stat data;
+		int err=stat(path.c_str(),&data);
+		if(err!=0){
+			err=errno;
+			if(err!=ENOENT)
+				throw std::runtime_error("Unable to stat "+path);
+			else
+				make=true;
+		}
+		
+		if(make){
+			int err=mkdir(path.c_str(),mode);
+			if(err){
+				err=errno;
+				throw std::runtime_error("Unable to create directory "+path+": error "+std::to_string(err));
+			}
+		}
+	};
+	
+	if(path.empty())
+		throw std::logic_error("The empty path is not a valid argument to mkdir");
+	if(mode>0777)
+		throw std::logic_error("mkdir does not permit setting any mode bits above the lowest 9");
+	size_t slashPos=path.find('/',1); //if the first character is a slash we don't care
+	while(slashPos!=std::string::npos){
+		std::string parentPath=path.substr(0,slashPos);
+		makeIfNonexistent(parentPath);
+		slashPos=path.find('/',slashPos+1);
+	}
+	if(path.back()!='/') //only necessary if the loop didn't already get everything
+		makeIfNonexistent(path);
+}
+
+void ensureContainingDirectory(const std::string& path, uint16_t mode){
+	auto slashPos=path.rfind('/');
+	if(slashPos==std::string::npos) //no directory portion in path; can't do anything useful
+		return;
+	mkdir_p(path.substr(0,slashPos+1), mode);
+}
 	
 bool storeCredential(std::string url, const credential& cred, bool overwrite){
 	std::string path=getCredFilePath();
@@ -126,6 +185,7 @@ bool storeCredential(std::string url, const credential& cred, bool overwrite){
 		//However, we do need to create it with the right permissions. We should do
 		//this before we write anything interesting to it.
 		{
+			ensureContainingDirectory(path,0700);
 			//We need the file to exist to set its permissions, so first open it
 			std::ofstream credFile(path);
 			int err=chmod(path.c_str(),0600);
