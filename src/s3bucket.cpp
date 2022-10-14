@@ -45,7 +45,7 @@ std::string parseListAllBucketsResult(xmlNode* node, const optionsType& options)
 
 bool listBuckets(const std::string rawURL, optionsType options){
 	auto credentials=s3tools::fetchStoredCredentials();
-	auto cred=findCredentials(credentials,rawURL);
+	auto cred=findCredentials(credentials,rawURL).second;
 	s3tools::URL basicURL(rawURL);
 	
 	std::string continuation;
@@ -131,7 +131,7 @@ bool addBucket(std::string rawURL, const std::string bucket){
 	s3tools::URL url(rawURL);
 	url.path="/"+bucket;
 	auto credentials=s3tools::fetchStoredCredentials();
-	auto cred=findCredentials(credentials,rawURL);
+	auto cred=findCredentials(credentials,rawURL).second;
 	s3tools::URL signedURL=s3tools::genURL(cred.username,cred.key,"PUT",url.str(),60);
 	
 	std::string resultData;
@@ -170,7 +170,7 @@ bool deleteBucket(std::string rawURL, const std::string bucket){
 	s3tools::URL url(rawURL);
 	url.path="/"+bucket;
 	auto credentials=s3tools::fetchStoredCredentials();
-	auto cred=findCredentials(credentials,rawURL);
+	auto cred=findCredentials(credentials,rawURL).second;
 	s3tools::URL signedURL=s3tools::genURL(cred.username,cred.key,"DELETE",url.str(),60);
 	
 	std::string resultData;
@@ -211,7 +211,7 @@ bool bucketInfo(std::string rawURL, const std::string bucket){
 	s3tools::URL url(rawURL);
 	url.path="/"+bucket;
 	auto credentials=s3tools::fetchStoredCredentials();
-	auto cred=findCredentials(credentials,rawURL);
+	auto cred=findCredentials(credentials,rawURL).second;
 	
 	std::unique_ptr<CURL,void (*)(CURL*)> curlSession(curl_easy_init(),curl_easy_cleanup);
 	CURLcode err;

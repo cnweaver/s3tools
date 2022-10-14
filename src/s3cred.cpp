@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -22,12 +23,23 @@ SUBCOMMANDS
     Interactive prompts are given for necessary information. 
  delete URL
     Delete any credential record associated with URL.
+ import [file]
+    Add credential records read from a file,
+    or from stdin if no file is specified.
+ export [--json] [url]
+    Write credential data to stdout.
+    If the --json option is specified, data is written as JSON.
+    If a URL is specified, only the credential best matching
+    that URL is exported.
 
 NOTES
- s3cred performs no validation that credentials are valid or even well-formed.)";
+ s3cred performs no validation that credentials are valid or even well-formed.
+)";
 
 	OptionParser op(true);
 	op.setBaseUsage(usage);
+	bool outputJSON=false;
+	op.addOption("json", [&]{outputJSON=true;}, "Export credentials as JSON");
 	auto arguments=op.parseArgs(argc,argv);
 	
 	if(op.didPrintUsage())
@@ -37,6 +49,9 @@ NOTES
 		return(0);
 	}
 	std::string subcommand=arguments[1];
+	
+	if(subcommand!="export" && outputJSON)
+		std::cerr << "--json has no effect for actions other than export\n";
 
 	if(subcommand=="list"){
 		try{
@@ -106,6 +121,41 @@ NOTES
 				std::cout << "Found no credential information associated with " << url << std::endl;
 				return(1);
 			}
+		}catch(std::exception& ex){
+			std::cerr << "s3cred: Error: " << ex.what() << std::endl;
+			return(1);
+		}
+	}
+	if(subcommand=="import"){
+		try{
+			int added=0;
+			if(arguments.size()==3){
+				std::ifstream importFile(arguments[2]);
+				if(!importFile){
+					std::cerr << "s3cred: Error: Unable to open " << arguments[2] << " for reading" << std::endl;
+					return(1);
+				}
+				added=s3tools::importCredentials(importFile, arguments[2]);
+			}
+			else
+				added=s3tools::importCredentials(std::cin, "standard input");
+			std::cout << "Imported " << added << " credential" << (added==1?"":"s") << std::endl;
+			return(0);
+		}catch(std::exception& ex){
+			std::cerr << "s3cred: Error: " << ex.what() << std::endl;
+			return(1);
+		}
+	}
+	if(subcommand=="export"){
+		try{
+			s3tools::CredentialCollection credentials=s3tools::fetchStoredCredentials();
+			if(arguments.size()==3)
+				s3tools::exportCredentials(std::cout, credentials, arguments[2],
+				                           outputJSON?s3tools::CredFormat::JSON:s3tools::CredFormat::Internal);
+			else
+				s3tools::exportCredentials(std::cout, credentials,
+				                           outputJSON?s3tools::CredFormat::JSON:s3tools::CredFormat::Internal);
+			return(0);
 		}catch(std::exception& ex){
 			std::cerr << "s3cred: Error: " << ex.what() << std::endl;
 			return(1);

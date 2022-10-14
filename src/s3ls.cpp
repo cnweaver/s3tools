@@ -119,7 +119,7 @@ std::string parseXML(const std::string& raw, const optionsType& options){
 
 void list(const std::string& target, const s3tools::CredentialCollection& credentials, 
           const optionsType& options, CURL* curlSession, char* errBuf){
-	auto cred=findCredentials(credentials,target);
+	auto cred=findCredentials(credentials,target).second;
 	s3tools::URL basicURL(target);
 	basicURL.query["list-type"]="2";
 	basicURL.query["delimiter"]="/";

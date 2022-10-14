@@ -12,7 +12,7 @@
 
 void removeObject(std::string target){
 	auto credentials=s3tools::fetchStoredCredentials();
-	auto cred=findCredentials(credentials,target);
+	auto cred=findCredentials(credentials,target).second;
 	s3tools::URL signedURL=s3tools::genURL(cred.username,cred.key,"DELETE",target,60);
 	
 	std::string resultData;

@@ -34,7 +34,7 @@ USAGE
 		if(arguments.size()==4)
 			validity=std::stoul(arguments[3]);
 		auto credentials=s3tools::fetchStoredCredentials();
-		auto cred=findCredentials(credentials,baseURL);
+		auto cred=findCredentials(credentials,baseURL).second;
 		s3tools::URL signedURL=s3tools::genURL(cred.username,cred.key,verb,baseURL,validity);
 		std::cout << signedURL.str() << std::endl;
 	}catch(std::exception& ex){

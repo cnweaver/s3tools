@@ -61,7 +61,7 @@ auto readInput(char* buffer, size_t size, size_t nitems, void* instream)->size_t
 		
 void serversideCopy(std::string src, std::string dest, 
                     const s3tools::CredentialCollection& credentials, bool verbose){
-	auto cred=findCredentials(credentials,dest);
+	auto cred=findCredentials(credentials,dest).second;
 	s3tools::URL destURL(dest);
 	s3tools::URL sourceURL(src);
 	if(destURL.host != sourceURL.host)
@@ -121,7 +121,7 @@ void serversideCopy(std::string src, std::string dest,
 		
 void downloadFile(std::string src, std::string dest, 
                   const s3tools::CredentialCollection& credentials, bool verbose){
-	auto cred=findCredentials(credentials,src);
+	auto cred=findCredentials(credentials,src).second;
 	s3tools::URL signedURL=s3tools::genURL(cred.username,cred.key,"GET",src,60);
 	
 	//if writing to a directory, figure out the basename of the source file
@@ -176,7 +176,7 @@ void downloadFile(std::string src, std::string dest,
 		
 void uploadFile(std::string src, std::string dest, 
                 const s3tools::CredentialCollection& credentials, bool verbose){
-	auto cred=findCredentials(credentials,dest);
+	auto cred=findCredentials(credentials,dest).second;
 	s3tools::URL signedURL=s3tools::genURL(cred.username,cred.key,"PUT",dest,60);
 	
 	//we don't yet know how to upload directories!
