@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# Determine the directory in which the user is running configure,
+# and the source directory where it lives
+WORKING_DIR=$(pwd)
+cd $(dirname $0)
+SOURCE_DIR=$(pwd)
+cd "${WORKING_DIR}"
+
 find_libcurl(){
 	PKG=libcurl
 	echo "Looking for $PKG..."
@@ -9,7 +16,7 @@ find_libcurl(){
 	
 	which "$CURL_CONFIG" 2>&1 > /dev/null
 	if [ "$?" -ne 0 ]; then 
-		echo "$CURL_CONFIG not found; unable to loacte $PKG" >&2
+		echo "$CURL_CONFIG not found; unable to locate $PKG" >&2
 		return; 
 	fi
 
@@ -28,7 +35,7 @@ find_libxml2(){
 	
 	which "$XML2_CONFIG" 2>&1 > /dev/null
 	if [ "$?" -ne 0 ]; then 
-		echo "$XML2_CONFIG not found; unable to loacte $PKG" >&2
+		echo "$XML2_CONFIG not found; unable to locate $PKG" >&2
 		return; 
 	fi
 
@@ -43,7 +50,7 @@ find_cryptopp(){
 	# it works. 
 	echo "Checking for cryptopp..."
 	TEST_FLAGS="$CXXFLAGS $CRYPTOPP_CFLAGS $LDFLAGS $CRYPTOPP_LDFLAGS"
-	$CXX src/cryptopp_test.cpp $TEST_FLAGS -o bin/cryptopp_test >/dev/null 2>&1
+	$CXX "${SOURCE_DIR}/src/cryptopp_test.cpp" $TEST_FLAGS -o "${WORKING_DIR}/bin/cryptopp_test" >/dev/null 2>&1
 	RESULT=$?
 	if [ "$RESULT" -ne 0 ];
 	then
@@ -93,7 +100,7 @@ XML2_CONFIG="xml2-config"
 CRYPTOPP_CFLAGS=${CRYPTOPP_CFLAGS-""}
 CRYPTOPP_LDFLAGS=${CRYPTOPP_LDFLAGS-"-lcryptopp"}
 
-CXXFLAGS="$CXXFLAGS -std=c++11 -O2 -Iinclude"
+CXXFLAGS="$CXXFLAGS -std=c++11 -O2 -I${SOURCE_DIR}/include"
 
 if [ ! -d ./bin/ ]; then
     mkdir bin;
@@ -206,8 +213,17 @@ mkdir -p bin
 mkdir -p build
 mkdir -p lib
 
+if [ ! -e "${WORKING_DIR}/makefile" -o "${SOURCE_DIR}/makefile" -nt "${WORKING_DIR}/makefile" ]; then
+	echo "Copying makefile"
+	cp "${SOURCE_DIR}/makefile" "${WORKING_DIR}/makefile"
+fi
+
 echo "Generating settings.mk"
 echo "
+# Directories
+SOURCE_DIR:=$SOURCE_DIR
+WORKING_DIR:=$WORKING_DIR
+
 # Compiler
 CXX:=$CXX
 AR:=$AR
