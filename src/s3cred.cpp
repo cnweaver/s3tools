@@ -149,9 +149,12 @@ NOTES
 	if(subcommand=="export"){
 		try{
 			s3tools::CredentialCollection credentials=s3tools::fetchStoredCredentials();
-			if(arguments.size()==3)
-				s3tools::exportCredentials(std::cout, credentials, arguments[2],
-				                           outputJSON?s3tools::CredFormat::JSON:s3tools::CredFormat::Internal);
+			if(arguments.size()==3){
+				auto bestMatch=findCredentials(credentials,arguments[2]);
+				s3tools::exportCredentials(std::cout, credentials, bestMatch.first,
+				                           outputJSON ? s3tools::CredFormat::JSON
+				                                      : s3tools::CredFormat::Internal);
+			}
 			else
 				s3tools::exportCredentials(std::cout, credentials,
 				                           outputJSON?s3tools::CredFormat::JSON:s3tools::CredFormat::Internal);
