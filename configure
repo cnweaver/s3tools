@@ -123,15 +123,15 @@ for instance \`--prefix=\$HOME'.
 
 The following options can be used to maunally specify the 
 locations of dependencies:
-  --with-cyptopp=DIR        use the copy of Crypto++ in DIR
-                            assuming headers are in DIR/include
-                            and libraries in DIR/lib
-  --with-cyptopp-incdir=DIR use the copy of Crypto++ in DIR
-  --with-cyptopp-libdir=DIR use the copy of Crypto++ in DIR
-  --with-curl-config=PROG   use PROG as curl-config to obtain
-                            suitable libcurl flags
-  --with-xml2-config=PROG   use PROG as xml2-config to obtain
-                            suitable libxml2 flags
+  --with-cryptopp=DIR        use the copy of Crypto++ in DIR
+                             assuming headers are in DIR/include
+                             and libraries in DIR/lib
+  --with-cryptopp-incdir=DIR use the Crypto++ headers in DIR
+  --with-cryptopp-libdir=DIR use the Crypto++ library in DIR
+  --with-curl-config=PROG    use PROG as curl-config to obtain
+                             suitable libcurl flags
+  --with-xml2-config=PROG    use PROG as xml2-config to obtain
+                             suitable libxml2 flags
 
 Some influential environment variables:
 CXX         C++ compiler command
@@ -218,6 +218,8 @@ if [ ! -e "${WORKING_DIR}/makefile" -o "${SOURCE_DIR}/makefile" -nt "${WORKING_D
 	cp "${SOURCE_DIR}/makefile" "${WORKING_DIR}/makefile"
 fi
 
+CRYPTOPP_SRC_URL="https://cryptopp.com/cryptopp870.zip"
+
 echo "Generating settings.mk"
 echo "
 # Directories
@@ -244,6 +246,8 @@ PREFIX:=$PREFIX
 VERSION:=$VERSION
 CXXFLAGS:=$CXXFLAGS
 LDFLAGS:=$LDFLAGS
+
+CRYPTOPP_SRC_URL:=$CRYPTOPP_SRC_URL
 
 DYN_SUFFIX:=$DYN_SUFFIX
 DYN_OPT=$DYN_OPT

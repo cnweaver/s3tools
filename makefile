@@ -7,9 +7,9 @@ TESTS=tests/url_tests
 
 all : $(STATLIB) $(PROGRAMS) settings.mk
 
-settings.mk : 
+settings.mk :
 	@echo "  You need to run ./configure before make  "
-	@sh -c 'exit 1'
+	@false
 
 $(STATLIB) : $(LIBOBJECTS)
 	ar -rcs $(STATLIB) $(LIBOBJECTS)
@@ -36,37 +36,37 @@ build/xml_utils.o : $(SOURCE_DIR)/src/xml_utils.cpp $(SOURCE_DIR)/src/xml_utils.
 	$(CXX) $(CXXFLAGS) $(LIBXML2_CFLAGS) -c $(SOURCE_DIR)/src/xml_utils.cpp -o build/xml_utils.o
 
 bin/s3bucket : build/s3bucket.o build/curl_utils.o build/xml_utils.o $(STATLIB)
-	$(CXX) build/s3bucket.o build/curl_utils.o build/xml_utils.o $(STATLIB) $(LDFLAGS) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) -o bin/s3bucket
+	$(CXX) build/s3bucket.o build/curl_utils.o build/xml_utils.o $(STATLIB) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) $(LDFLAGS) -o bin/s3bucket
 
 build/s3bucket.o : $(SOURCE_DIR)/src/s3bucket.cpp $(SOURCE_DIR)/include/s3tools/cred_manage.h $(SOURCE_DIR)/include/s3tools/signing.h $(SOURCE_DIR)/include/s3tools/url.h $(SOURCE_DIR)/src/xml_utils.h settings.mk
 	$(CXX) $(CXXFLAGS) $(LIBCURL_CFLAGS) $(LIBXML2_CFLAGS) -c $(SOURCE_DIR)/src/s3bucket.cpp -o build/s3bucket.o
 
 bin/s3cp : build/s3cp.o build/curl_utils.o build/xml_utils.o $(STATLIB)
-	$(CXX) build/s3cp.o build/curl_utils.o build/xml_utils.o $(STATLIB) $(LDFLAGS) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) -o bin/s3cp
+	$(CXX) build/s3cp.o build/curl_utils.o build/xml_utils.o $(STATLIB) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) $(LDFLAGS) -o bin/s3cp
 
 build/s3cp.o : $(SOURCE_DIR)/src/s3cp.cpp $(SOURCE_DIR)/include/s3tools/cred_manage.h $(SOURCE_DIR)/include/s3tools/signing.h $(SOURCE_DIR)/include/s3tools/url.h settings.mk
 	$(CXX) $(CXXFLAGS) $(LIBCURL_CFLAGS) $(LIBXML2_CFLAGS) -c $(SOURCE_DIR)/src/s3cp.cpp -o build/s3cp.o
 
 bin/s3ls : build/s3ls.o build/curl_utils.o build/xml_utils.o $(STATLIB)
-	$(CXX) build/s3ls.o build/curl_utils.o build/xml_utils.o $(STATLIB) $(LDFLAGS) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) -o bin/s3ls
+	$(CXX) build/s3ls.o build/curl_utils.o build/xml_utils.o $(STATLIB) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) $(LDFLAGS) -o bin/s3ls
 
 build/s3ls.o : $(SOURCE_DIR)/src/s3ls.cpp $(SOURCE_DIR)/include/s3tools/cred_manage.h $(SOURCE_DIR)/include/s3tools/signing.h $(SOURCE_DIR)/include/s3tools/url.h $(SOURCE_DIR)/src/xml_utils.h settings.mk
 	$(CXX) $(CXXFLAGS) $(LIBCURL_CFLAGS) $(LIBXML2_CFLAGS) -c $(SOURCE_DIR)/src/s3ls.cpp -o build/s3ls.o
 
 bin/s3rm : build/s3rm.o build/curl_utils.o build/xml_utils.o $(STATLIB)
-	$(CXX) build/s3rm.o build/curl_utils.o build/xml_utils.o $(STATLIB) $(LDFLAGS) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) -o bin/s3rm
+	$(CXX) build/s3rm.o build/curl_utils.o build/xml_utils.o $(STATLIB) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) $(LDFLAGS) -o bin/s3rm
 
 build/s3rm.o : $(SOURCE_DIR)/src/s3rm.cpp $(SOURCE_DIR)/include/s3tools/cred_manage.h $(SOURCE_DIR)/include/s3tools/signing.h $(SOURCE_DIR)/include/s3tools/url.h $(SOURCE_DIR)/src/curl_utils.h $(SOURCE_DIR)/src/xml_utils.h settings.mk
 	$(CXX) $(CXXFLAGS) $(LIBCURL_CFLAGS) $(LIBXML2_CFLAGS) -c $(SOURCE_DIR)/src/s3rm.cpp -o build/s3rm.o
 
 bin/s3sign : build/s3sign.o $(STATLIB)
-	$(CXX) build/s3sign.o $(STATLIB) $(LDFLAGS) $(CRYPTOPP_LDFLAGS) -o bin/s3sign
+	$(CXX) build/s3sign.o $(STATLIB) $(CRYPTOPP_LDFLAGS) $(LDFLAGS) -o bin/s3sign
 
 build/s3sign.o : $(SOURCE_DIR)/src/s3sign.cpp $(SOURCE_DIR)/include/s3tools/cred_manage.h $(SOURCE_DIR)/include/s3tools/signing.h $(SOURCE_DIR)/include/s3tools/url.h settings.mk
 	$(CXX) $(CXXFLAGS) -c $(SOURCE_DIR)/src/s3sign.cpp -o build/s3sign.o
 
 tests/url_tests : build/url_tests.o $(STATLIB)
-	$(CXX) build/url_tests.o $(STATLIB) $(LDFLAGS) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) -o tests/url_tests
+	$(CXX) build/url_tests.o $(STATLIB) $(CRYPTOPP_LDFLAGS) $(LIBCURL_LDFLAGS) $(LIBXML2_LDFLAGS) $(LDFLAGS) -o tests/url_tests
 
 build/url_tests.o : $(SOURCE_DIR)/tests/url_tests.cpp include/s3tools/url.h
 	$(CXX) $(CXXFLAGS) -c $(SOURCE_DIR)/tests/url_tests.cpp -o build/url_tests.o
@@ -79,6 +79,7 @@ clean :
 	rm -f $(STATLIB)
 	rm -f $(PROGRAMS)
 	rm -f $(TESTS)
+	rm -rf linux-static-build
 
 install: $(STATLIB) $(PROGRAMS)
 	@echo Installing headers in $(PREFIX)/include/s3tools
@@ -100,3 +101,23 @@ uninstall:
 	@echo $(PROGRAMS) | xargs -n 1 echo | sed 's|\(.*\)|'$(PREFIX)'/\1|' | xargs rm -f
 
 .PHONY : all clean install uninstall test
+
+linux-static-build : 
+	mkdir linux-static-build
+
+linux-static-build/cryptopp/cryptopp.zip : linux-static-build
+	mkdir -p linux-static-build/cryptopp
+	curl -L $(CRYPTOPP_SRC_URL) -o linux-static-build/cryptopp/cryptopp.zip
+	
+linux-static-build/cryptopp/Readme.txt : linux-static-build/cryptopp/cryptopp.zip
+	unzip -u -d linux-static-build/cryptopp/ linux-static-build/cryptopp/cryptopp.zip
+
+.PHONY : docker-build-env
+docker-build-env : $(SOURCE_DIR)/scripts/static_build_env.docker
+	docker build -q -t s3tools-env - < $(SOURCE_DIR)/scripts/static_build_env.docker
+
+linux-static-build/bin/s3cp : linux-static-build/cryptopp/Readme.txt docker-build-env
+	docker run --rm -v $(SOURCE_DIR):/s3tools s3tools-env /s3tools/scripts/build-static.sh
+
+.PHONY : linux-static
+linux-static : linux-static-build/bin/s3cp
