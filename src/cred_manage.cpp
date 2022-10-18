@@ -293,12 +293,9 @@ CredentialCollection readCredentials(std::istream& credFile, const std::string& 
 	//a URI scheme cannot contain an opening brace, and in fact must begin with a
 	//letter. A JSON array must begin with a bracket, so checking whether the first
 	//non-whitespace character is a bracket fully disambiguates between the two formats.
-	auto startPos=credFile.tellg();
 	char c;
-	credFile >> c;
-	if(!credFile)
-		throw std::runtime_error("Unable to read a non-whitespace character from "+path);
-	credFile.seekg(startPos);
+	while(credFile && std::isspace(c=credFile.peek()))
+		credFile.get();
 	if(c=='[')
 		return parseCredentialsJSON(credFile, path);
 	else if(std::isalpha(c))
@@ -371,7 +368,7 @@ void writeCredentialsJSON(std::ostream& os, const CredentialCollection& credenti
 ///Overwrite all stored credentials with a different collection
 ///\pre file permissions requirements must already have been enforced on the
 ///     credential file (exists, owned by correct user, permissions are 0600).
-void writeCredentialstoDefaultLocation(const CredentialCollection& credentials){
+void writeCredentialsToDefaultLocation(const CredentialCollection& credentials){
 	std::string path=getCredFilePath();
 	//permissions were already enforced by fetchStoredCredentials
 	std::ofstream credFile(path);
@@ -424,6 +421,21 @@ void ensureContainingDirectory(const std::string& path, uint16_t mode){
 		return;
 	mkdir_p(path.substr(0,slashPos+1), mode);
 }
+
+//should not be used on an existing file
+void setCredentialFilePerms(const std::string& path){
+	//File doesn't exist, so we don't need to worry about any existing contents.
+	//However, we do need to create it with the right permissions. We should do
+	//this before we write anything interesting to it.
+	ensureContainingDirectory(path,0700);
+	//We need the file to exist to set its permissions, so first open it
+	std::ofstream credFile(path);
+	int err=chmod(path.c_str(),0600);
+	if(err!=0){
+		err=errno;
+		throw std::runtime_error("Failed to set permissions for "+path);
+	}
+}
 	
 bool storeCredential(std::string url, const credential& cred, bool overwrite){
 	std::string path=getCredFilePath();
@@ -431,19 +443,7 @@ bool storeCredential(std::string url, const credential& cred, bool overwrite){
 	if(perms==PermState::INVALID)
 		throw std::runtime_error("Credentials file "+path+" has wrong permissions; should be 0600");
 	if(perms==PermState::DOES_NOT_EXIST){
-		//File doesn't exist, so we don't need to worry about any existing contents.
-		//However, we do need to create it with the right permissions. We should do
-		//this before we write anything interesting to it.
-		{
-			ensureContainingDirectory(path,0700);
-			//We need the file to exist to set its permissions, so first open it
-			std::ofstream credFile(path);
-			int err=chmod(path.c_str(),0600);
-			if(err!=0){
-				err=errno;
-				throw std::runtime_error("Failed to set permissions for "+path);
-			}
-		}
+		setCredentialFilePerms(path);
 		std::fstream credFile(path,std::ios_base::in|std::ios_base::out);
 		writeCredentialRecord(credFile,url,cred);
 		if(credFile.fail() || credFile.bad())
@@ -472,7 +472,7 @@ bool storeCredential(std::string url, const credential& cred, bool overwrite){
 	//the new one. The simplest way to do this is to update our in memory data, 
 	//since we already read it all, and then rewrite it all to disk. 
 	existingCreds[url]=cred;
-	writeCredentialstoDefaultLocation(existingCreds);
+	writeCredentialsToDefaultLocation(existingCreds);
 	return(true);
 }
 	
@@ -483,7 +483,7 @@ bool removeCredential(std::string url){
 	if(!credentials.erase(url))
 		return(false); //if it wasn't there, we're done
 	//rewrite remaining data
-	writeCredentialstoDefaultLocation(credentials);
+	writeCredentialsToDefaultLocation(credentials);
 	return(true);
 }
 	
@@ -548,8 +548,15 @@ int importCredentials(std::istream& inputData,
 	}
 	
 	//write back out
-	if(added)
-		writeCredentialstoDefaultLocation(existingCreds);
+	if(added){
+		std::string path=getCredFilePath();
+		PermState perms=checkPermissions(path);
+		if(perms==PermState::INVALID)
+			throw std::runtime_error("Credentials file "+path+" has wrong permissions; should be 0600");
+		if(perms==PermState::DOES_NOT_EXIST)
+			setCredentialFilePerms(path);
+		writeCredentialsToDefaultLocation(existingCreds);
+	}
 	return added;
 }
 
