@@ -212,6 +212,18 @@ OPTIONS)";
 		std::cerr << "Failed to set curl error buffer" << std::endl;
 		return(1);
 	}
+#ifdef USE_CURLOPT_CAINFO
+	std::string caBundlePath=detectCABundlePath();
+	if(!caBundlePath.empty()){
+		err=curl_easy_setopt(curlSession.get(), CURLOPT_CAINFO, caBundlePath.c_str());
+		if(err!=CURLE_OK){
+			if(errBuf[0]!=0)
+				std::cerr << "Failed to set curl CA bundle path\n curl error: " << errBuf.get() << std::endl;
+			else
+				std::cerr << "Failed to set curl CA bundle path\n curl error: " << curl_easy_strerror(err) << std::endl;
+		}
+	}
+#endif
 
 	for(const std::string& target : arguments){
 		try{

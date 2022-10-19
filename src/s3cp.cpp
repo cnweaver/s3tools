@@ -109,6 +109,14 @@ void serversideCopy(std::string src, std::string dest,
 	err=curl_easy_setopt(curlSession.get(), CURLOPT_HTTPHEADER, headerList.get());
 	if(err!=CURLE_OK)
 		reportCurlError("Failed to set request headers",err,errBuf.get());
+#ifdef USE_CURLOPT_CAINFO
+	std::string caBundlePath=detectCABundlePath();
+	if(!caBundlePath.empty()){
+		err=curl_easy_setopt(curlSession.get(), CURLOPT_CAINFO, caBundlePath.c_str());
+		if(err!=CURLE_OK)
+			reportCurlError("Failed to set curl CA bundle path",err,errBuf.get());
+	}
+#endif
 	err=curl_easy_perform(curlSession.get());
 	if(err!=CURLE_OK)
 		reportCurlError("curl perform GET failed",err,errBuf.get());
@@ -169,6 +177,14 @@ void downloadFile(std::string src, std::string dest,
 		if(err!=CURLE_OK)
 			reportCurlError("Failed to set curl progress indicator",err,errBuf.get());
 	}
+#ifdef USE_CURLOPT_CAINFO
+	std::string caBundlePath=detectCABundlePath();
+	if(!caBundlePath.empty()){
+		err=curl_easy_setopt(curlSession.get(), CURLOPT_CAINFO, caBundlePath.c_str());
+		if(err!=CURLE_OK)
+			reportCurlError("Failed to set curl CA bundle path",err,errBuf.get());
+	}
+#endif
 	err=curl_easy_perform(curlSession.get());
 	if(err!=CURLE_OK)
 		reportCurlError("curl perform GET failed",err,errBuf.get());
@@ -218,6 +234,14 @@ void uploadFile(std::string src, std::string dest,
 		if(err!=CURLE_OK)
 			reportCurlError("Failed to set curl progress indicator",err,errBuf.get());
 	}
+#ifdef USE_CURLOPT_CAINFO
+	std::string caBundlePath=detectCABundlePath();
+	if(!caBundlePath.empty()){
+		err=curl_easy_setopt(curlSession.get(), CURLOPT_CAINFO, caBundlePath.c_str());
+		if(err!=CURLE_OK)
+			reportCurlError("Failed to set curl CA bundle path",err,errBuf.get());
+	}
+#endif
 	err=curl_easy_perform(curlSession.get());
 	if(err!=CURLE_OK)
 		reportCurlError("curl perform PUT failed",err,errBuf.get());

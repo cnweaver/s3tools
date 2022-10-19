@@ -58,6 +58,9 @@ bool listBuckets(const std::string rawURL, optionsType options){
 		std::cerr << "Failed to set curl error buffer" << std::endl;
 		return(false);
 	}
+#ifdef USE_CURLOPT_CAINFO
+	std::string caBundlePath=detectCABundlePath();
+#endif
 	do{
 		s3tools::URL signedURL=s3tools::genURL(cred.username,cred.key,"GET",basicURL.str(),60);
 		std::string resultData;
@@ -73,6 +76,13 @@ bool listBuckets(const std::string rawURL, optionsType options){
 		err=curl_easy_setopt(curlSession.get(), CURLOPT_WRITEDATA, &resultData);
 		if(err!=CURLE_OK)
 			reportCurlError("Failed to set curl output callback data",err,errBuf.get());
+#ifdef USE_CURLOPT_CAINFO
+		if(!caBundlePath.empty()){
+			err=curl_easy_setopt(curlSession.get(), CURLOPT_CAINFO, caBundlePath.c_str());
+			if(err!=CURLE_OK)
+				reportCurlError("Failed to set curl CA bundle path",err,errBuf.get());
+		}
+#endif
 		err=curl_easy_perform(curlSession.get());
 		if(err!=CURLE_OK)
 			reportCurlError("curl perform GET failed",err,errBuf.get());
@@ -157,6 +167,14 @@ bool addBucket(std::string rawURL, const std::string bucket){
 	err=curl_easy_setopt(curlSession.get(), CURLOPT_WRITEDATA, &resultData);
 	if(err!=CURLE_OK)
 		reportCurlError("Failed to set curl output callback data",err,errBuf.get());
+#ifdef USE_CURLOPT_CAINFO
+	std::string caBundlePath=detectCABundlePath();
+	if(!caBundlePath.empty()){
+		err=curl_easy_setopt(curlSession.get(), CURLOPT_CAINFO, caBundlePath.c_str());
+		if(err!=CURLE_OK)
+			reportCurlError("Failed to set curl CA bundle path",err,errBuf.get());
+	}
+#endif
 	err=curl_easy_perform(curlSession.get());
 	if(err!=CURLE_OK)
 		reportCurlError("curl perform PUT failed",err,errBuf.get());
@@ -196,6 +214,14 @@ bool deleteBucket(std::string rawURL, const std::string bucket){
 	err=curl_easy_setopt(curlSession.get(), CURLOPT_WRITEDATA, &resultData);
 	if(err!=CURLE_OK)
 		reportCurlError("Failed to set curl output callback data",err,errBuf.get());
+#ifdef USE_CURLOPT_CAINFO
+	std::string caBundlePath=detectCABundlePath();
+	if(!caBundlePath.empty()){
+		err=curl_easy_setopt(curlSession.get(), CURLOPT_CAINFO, caBundlePath.c_str());
+		if(err!=CURLE_OK)
+			reportCurlError("Failed to set curl CA bundle path",err,errBuf.get());
+	}
+#endif
 	err=curl_easy_perform(curlSession.get());
 	if(err!=CURLE_OK)
 		reportCurlError("curl perform DELETE failed",err,errBuf.get());
@@ -212,6 +238,10 @@ bool bucketInfo(std::string rawURL, const std::string bucket){
 	url.path="/"+bucket;
 	auto credentials=s3tools::fetchStoredCredentials();
 	auto cred=findCredentials(credentials,rawURL).second;
+	
+#ifdef USE_CURLOPT_CAINFO
+	std::string caBundlePath=detectCABundlePath();
+#endif
 	
 	std::unique_ptr<CURL,void (*)(CURL*)> curlSession(curl_easy_init(),curl_easy_cleanup);
 	CURLcode err;
@@ -237,6 +267,13 @@ bool bucketInfo(std::string rawURL, const std::string bucket){
 		err=curl_easy_setopt(curlSession.get(), CURLOPT_WRITEDATA, &resultData);
 		if(err!=CURLE_OK)
 			reportCurlError("Failed to set curl output callback data",err,errBuf.get());
+#ifdef USE_CURLOPT_CAINFO
+		if(!caBundlePath.empty()){
+			err=curl_easy_setopt(curlSession.get(), CURLOPT_CAINFO, caBundlePath.c_str());
+			if(err!=CURLE_OK)
+				reportCurlError("Failed to set curl CA bundle path",err,errBuf.get());
+		}
+#endif
 		err=curl_easy_perform(curlSession.get());
 		if(err!=CURLE_OK)
 			reportCurlError("curl perform GET failed",err,errBuf.get());

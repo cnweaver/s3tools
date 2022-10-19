@@ -10,8 +10,7 @@
 #include "xml_utils.h"
 #include "external/cl_options.h"
 
-void removeObject(std::string target){
-	auto credentials=s3tools::fetchStoredCredentials();
+void removeObject(std::string target, const s3tools::CredentialCollection& credentials, const std::string& caBundlePath){
 	auto cred=findCredentials(credentials,target).second;
 	s3tools::URL signedURL=s3tools::genURL(cred.username,cred.key,"DELETE",target,60);
 	
@@ -35,6 +34,13 @@ void removeObject(std::string target){
 	err=curl_easy_setopt(curlSession.get(), CURLOPT_WRITEDATA, &resultData);
 	if(err!=CURLE_OK)
 		reportCurlError("Failed to set curl output callback data",err,errBuf.get());
+#ifdef USE_CURLOPT_CAINFO
+	if(!caBundlePath.empty()){
+		err=curl_easy_setopt(curlSession.get(), CURLOPT_CAINFO, caBundlePath.c_str());
+		if(err!=CURLE_OK)
+			reportCurlError("Failed to set curl CA bundle path",err,errBuf.get());
+	}
+#endif
 	err=curl_easy_perform(curlSession.get());
 	if(err!=CURLE_OK)
 		reportCurlError("curl perform DELETE failed",err,errBuf.get());
@@ -74,9 +80,17 @@ OPTIONS)";
 	//ignore the program name
 	arguments.erase(arguments.begin());
 	
+	auto credentials=s3tools::fetchStoredCredentials();
+	
+	std::string caBundlePath
+#ifdef USE_CURLOPT_CAINFO
+	=detectCABundlePath()
+#endif
+	;
+	
 	for(const std::string& target : arguments){
 		try{
-			removeObject(target);
+			removeObject(target,credentials,caBundlePath);
 		}catch(std::runtime_error& ex){
 			std::cerr << "Error: " << ex.what() << std::endl;
 			return(1);
